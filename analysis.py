@@ -9,6 +9,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import Normalizer
+from sklearn.model_selection import GridSearchCV
+
 
 """Stage 1: The Keras dataset
 
@@ -179,3 +181,84 @@ index_second_normalized_score = normalized_scores.index(second_normalized_scored
 print(f'The answer to the 2nd question: \
 {models[index_max_normalized_score].__name__}-{max_normalized_score}, \
 {models[index_second_normalized_score].__name__}-{second_normalized_scored}')
+
+
+"""Stage 5: Hyperparameter tuning
+
+Description
+
+In the final stage, you need to improve model performance by tuning the 
+hyperparameters. No need to do it manually, as sklearn has convenient tools for 
+this task. We'll be using GridSearchCV.
+We'll focus on only improving the performance of K-nearest Neighbors and 
+Random Forest.
+
+Objectives
+
+1 - Initialize GridSearchCV(estimator=..., param_grid=..., scoring='accuracy',
+n_jobs=-1) to search over the following parameters:
+    - For the K-nearest Neighbors classifier: n_neighbors = [3, 4], weights = 
+    ['uniform', 'distance'], algorithm = ['auto', 'brute']
+    - For the Random Forest classifier: n_estimators = [300, 500], 
+    max_features = ['auto', 'log2'], class_weight = 
+    ['balanced', 'balanced_subsample'], criterion = ['gini', 'entropy', 
+    'log_loss']
+2 - Run the fit method for GridSearchCV. This might take a while...
+3 - Print the best sets of parameters for both algorithms.
+4 - Train two best estimators on the test set and print their accuracies.
+
+"""
+
+# For K-NearestNeighbor
+knn_model = KNeighborsClassifier()
+knn_param_grid = {'n_neighbors': [3, 4],
+                  'weights': ['uniform', 'distance'],
+                  'algorithm': ['auto', 'brute']}
+knn_grid = GridSearchCV(knn_model, knn_param_grid, scoring='accuracy',
+                        n_jobs=-1)
+
+# For RandomForest
+rf_model = RandomForestClassifier(random_state=40)
+rf_param_grid = {'n_estimators': [300, 500],
+                 'max_features': ['sqrt', 'log2'],
+                 'class_weight': ['balanced', 'balanced_subsample']}
+rf_grid = GridSearchCV(rf_model, rf_param_grid, scoring='accuracy', n_jobs=-1)
+
+# Running the fit method for GridSearchCV
+knn_grid.fit(x_train_norm, y_train)
+rf_grid.fit(x_train_norm, y_train)
+
+# Getting the best parameters
+knn_best = knn_grid.best_params_
+rf_best = rf_grid.best_params_
+
+# Getting the accuracy using the best parameters for each model
+# for the KNN model
+knn_model_ = KNeighborsClassifier(algorithm=knn_best['algorithm'],
+                                  n_neighbors=knn_best['n_neighbors'],
+                                  weights=knn_best['weights'])
+knn_model_.fit(x_train_norm, y_train)
+knn_prediction = knn_model_.predict(x_test)
+knn_score = accuracy_score(y_test, knn_prediction)
+knn_score = round(knn_score, 4)
+# for the rf model
+rf_model_ = RandomForestClassifier(class_weight=rf_best['class_weight'],
+                                   max_features=rf_best['max_features'],
+                                   n_estimators=rf_best['n_estimators'])
+rf_model_.fit(x_train_norm, y_train)
+rf_prediction = rf_model_.predict(x_test)
+rf_score = accuracy_score(y_test, rf_prediction)
+rf_score = round(rf_score, 4)
+
+print(f"""K-nearest neighbours algorithm
+best estimator: KNeighborsClassifier(algorithm={knn_best['algorithm']}, \
+n_neighbors={knn_best['n_neighbors']}, weights={knn_best['weights']})
+accuracy: {knn_score}\n
+""")
+
+print(f"""Random forest algorithm
+best estimator: RandomForestClassifier(class_weight={rf_best['class_weight']}, \
+max_features={rf_best['max_features']}, n_estimators={rf_best['n_estimators']},\
+ random_state=40)
+accuracy: {rf_score}
+""")
