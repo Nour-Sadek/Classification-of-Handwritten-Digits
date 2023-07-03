@@ -3,6 +3,11 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
 """Stage 1: The Keras dataset
 
@@ -37,6 +42,7 @@ Target's shape: {y_train.shape}
 min: {reshaped_X_train.min()}, max: {reshaped_X_train.max()}
 """, end='\n\n')
 
+
 """Stage 2: Split into sets
 
 Description
@@ -69,3 +75,54 @@ y_test shape: {y_test.shape}
 Proportion of samples per class in train set:
 {pd.DataFrame(y_train).value_counts(normalize=True)} 
 """)
+
+
+"""Stage 3: Train models with default settings
+
+Description
+
+We are ready to train our models. In this stage, we need to find the best 
+algorithm that can identify handwritten digits. Refer to the following 
+algorithms: K-nearest Neighbors, Decision Tree, Logistic Regression, and 
+Random Forest. We need to train these four classifiers with default parameters.
+We will also use an accuracy metric to evaluate the models.
+
+Objectives
+
+1 - Implement the function <fit_predict_eval> to make the process of training 
+the four models faster. This function will initialize and fit the models, then 
+it will make predictions and print out the accuracies.
+2 - Print the answer to the question: Which model performs better? 
+
+"""
+
+
+# Implement the fit_predict_eval function
+def fit_predict_eval(model, features_train, features_test, target_train,
+                     target_test):
+    # fit the model, make a prediction, and calculate the accuracy score
+    model_ = model
+    model_.fit(features_train, target_train)
+    prediction = model_.predict(features_test)
+    score = accuracy_score(target_test, prediction)
+    score = round(score, 4)
+
+    print(f'Model: {model}\nAccuracy: {score}\n')
+
+    return score
+
+
+# Run the function on each of the four models
+models = [KNeighborsClassifier, DecisionTreeClassifier, LogisticRegression,
+          RandomForestClassifier]
+scores = []
+for model in models:
+    model_score = fit_predict_eval(model(), x_train, x_test, y_train, y_test)
+    scores.append(model_score)
+
+# Answer the question: Which model performs better?
+max_score = max(scores)
+index_max_score = scores.index(max_score)
+
+print(f'The answer to the question: {models[index_max_score].__name__} - \
+{max_score}')
